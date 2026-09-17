@@ -1,4 +1,4 @@
-# namer_app
+# get_location
 
 A new Flutter project.
 

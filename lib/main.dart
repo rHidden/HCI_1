@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -14,9 +16,9 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Namer App',
+        title: 'GetLocation App',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
         ),
         home: MyHomePage(),
       ),
@@ -81,21 +83,78 @@ class MyHomePage extends StatelessWidget {
     var appState = context.watch<MyAppState>();
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            LocationCard(
-              position: appState.position,
-              errorMessage: appState.errorMessage,
-              isLoading: appState.isLoading,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (appState.position != null) ...[
+                  LocationMap(position: appState.position!),
+                  SizedBox(height: 16),
+                ],
+                LocationCard(
+                  position: appState.position,
+                  errorMessage: appState.errorMessage,
+                  isLoading: appState.isLoading,
+                ),
+                SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    appState.getLocation();
+                  },
+                  child: Text('Get Location'),
+                ),
+              ],
             ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                appState.getLocation();
-              },
-              child: Text('Get Location'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LocationMap extends StatelessWidget {
+  const LocationMap({super.key, required this.position});
+
+  final Position position;
+
+  @override
+  Widget build(BuildContext context) {
+    final center = LatLng(position.latitude, position.longitude);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 280,
+        height: 200,
+        child: FlutterMap(
+          options: MapOptions(initialCenter: center, initialZoom: 16),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.rhidden.getLocation',
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: center,
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.topCenter,
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: Colors.purple,
+                    size: 40,
+                  ),
+                ),
+              ],
+            ),
+            const RichAttributionWidget(
+              alignment: AttributionAlignment.bottomLeft,
+              attributions: [
+                TextSourceAttribution('OpenStreetMap contributors'),
+              ],
             ),
           ],
         ),
